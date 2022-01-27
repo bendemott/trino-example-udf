@@ -19,13 +19,23 @@ mvn package
 mvn test
 ```
 
+## Contents
+The implementation of this plugin can be found within the `io.trino.plugin.example` package:
+
+- `FunctionsPlugin` which implements `io.trino.spi.Plugin` and notifies Trino how to load the plugin functions
+- `ExampleDecimalPrecisionScaleFunction` which adds a `add_one` function that adds exactly 1.0 to the decimal passed
+- `ExampleTimestampWithTimeZoneFunction` which adds a `yesterday` function that returns a `timestamp with time zone` 
+  exactly 24 hours before the timestamp given
+  
+There is also a test module that validates the both of the functions provided.
+
 ## Dealing with Decimal Types in Trino
 Trino represents **Decimal** types with a fixed `precision` and `scale` internally in one of two ways:
 
 1. using `Slice` when the **Scale** is > 18 digits *(aka "Long Decimal")*
 1. using `long` when the **Scale** <= 18 digits [8 byte] *(aka "Short Decimal")*
  
-More recent versions of Trino (`369`) switched from the `Slice` type to `Int128`.
+> Note: More recent versions of Trino (`369`) switched from the `Slice` type to `Int128`.
 
 ### Supporting Decimal Types in User Defined Functions
 To fully support the internal API for decimals you must provide these signatures
@@ -45,13 +55,15 @@ Internally in **Trino** `timestamp` can be represented in several ways.
 
 > `LongTimestampWithTimeZone` is a subclass of `TimestampWithTimeZone` so it covers both types.
 
-> The `SqlType` signature for Timestamp w/TZ is `@SqlType("timestamp(p) with time zone")`
+> The `SqlType` signature for Timestamp w/TZ is `@SqlType("timestamp(p) with time zone")` 
+> where `p` is the number of sub-second precision digits
 
 ### User Defined Functions
 When implementing a new Timezone based user defined function you'll want to handle both `long` and `LongTimestampWithTimeZone`
 
 The java `long` type is manipulated using bit-shifting to pack a timezone with timezone within.
 
+### Packed Millis with Timezone
 To work with a `long` type that contains a `packed-timestamp-timezone` you can use these methods:
 - `io.trino.spi.type.DateTimeEncoding.unpackMillisUtc(long packedEpochMillis)` - returns milliseconds since the epoch
 - `io.trino.spi.type.DateTimeEncoding.unpackZoneKey(long packedEpochMillis)` - returns  a `io.trino.spi.type.TimeZoneKey`
