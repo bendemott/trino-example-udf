@@ -50,6 +50,15 @@ Internally in **Trino** `timestamp` can be represented in several ways.
 ### User Defined Functions
 When implementing a new Timezone based user defined function you'll want to handle both `long` and `LongTimestampWithTimeZone`
 
+The java `long` type is manipulated using bit-shifting to pack a timezone with timezone within.
+
+To work with a `long` type that contains a `packed-timestamp-timezone` you can use these methods:
+- `io.trino.spi.type.DateTimeEncoding.unpackMillisUtc(long packedEpochMillis)` - returns milliseconds since the epoch
+- `io.trino.spi.type.DateTimeEncoding.unpackZoneKey(long packedEpochMillis)` - returns  a `io.trino.spi.type.TimeZoneKey`
+
+To construct a `LongTimestampWithTimeZone` from a `packed-timestamp-timezone` you can use the method:
+- `LongTimestampWithTimeZone.fromEpochMillisAndFraction(epochMilliseconds, picoSeconds, timeZone)`
+
 ### `TimestampWithTimeZone` type
 Many time functions expect to be given `Epoch Milliseconds` and `TimeZoneKey`  
 When dealing with the `LongTimestampWithTimeZone` type you can obtain the milliseconds and timezone via:
@@ -126,6 +135,8 @@ An example of this can be found in several connector plugins within Trino
 - [Geospatial pom.xml](https://github.com/trinodb/trino/blob/3e06ac2c94da4364fc386c7b0b3f82460e406a5e/plugin/trino-geospatial/pom.xml) 
 - [Clickhouse pom.xml](https://github.com/trinodb/trino/blob/3e06ac2c94da4364fc386c7b0b3f82460e406a5e/plugin/trino-clickhouse/pom.xml)
 
+> An example of this is `jodatime` - Because our tests use date-time objects we must add `jodatime` to our `pom.xml`
+
 ### `udf` Classes
 
 > Although not syntactically required, empty private constructors are required for ALL plugin classes.  
@@ -136,4 +147,10 @@ An example of this can be found in several connector plugins within Trino
 
 ### Multiple signatures and Embedded Classes
 
-> When a single **user defined function** requires multiple
+> When a single **user defined function** requires multiple signatures you can define the signatures in a single class as long as the signatures 
+> do not conflict.
+
+> If the signatures do conflict you can embed multiple signatures into a single embedded class
+- [MathFunctions.java (roundN) decimal signatures](https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/scalar/MathFunctions.java#L912)
+- [MathFunctions.java (round) bigint inline](https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/scalar/MathFunctions.java#L784)
+> Note that there must be at least one logical function annotated in the top-level class, or the plugin will not compile.
