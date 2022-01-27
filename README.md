@@ -14,6 +14,10 @@ Open your preferred terminal, and switch directories to this project where the `
 mvn package
 ```
 
+> this will produce a `target/trinoplugin-360.jar` file - this is your plugin to be deployed to your server.
+
+> Read about deploying plugins [here](https://trino.io/docs/current/develop/spi-overview.html#deploying-a-custom-plugin)
+
 ### run tests
 ```shell
 mvn test
