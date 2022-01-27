@@ -82,7 +82,7 @@ public final class ExampleDecimalPrecisionScaleFunction
     }
 }
 
-/*
+/* TODO switch this to a round algorithm that rounds to a random number of decimal places
 @ScalarFunction("round")
 @Description("Round to given number of decimal places")
 public static final class RoundN
